@@ -36,11 +36,21 @@ app.post("/validate", async (req, res) => {
 
     // Always treat incoming body as text and parse JSON
     if (typeof body === "string") {
-      console.log("🔍 RAW BODY RECEIVED:", body); // <-- add this log
+      console.log("RAW BODY RECEIVED:", body);
+
+      // Trim whitespace + NULL + invisible characters
+      body = body.replace(/\0/g, "").trim();
+
+      // Remove trailing characters after final `}`
+      const lastBrace = body.lastIndexOf("}");
+      if (lastBrace !== -1) {
+        body = body.substring(0, lastBrace + 1);
+      }
+
       try {
         body = JSON.parse(body);
       } catch (e) {
-        console.log("❌ JSON PARSE ERROR:", e.message); // <-- add this log
+        console.log("PARSE ERROR:", e.message, " | CLEANED BODY:", body);
         return res.json({ success: false, message: "Invalid JSON format" });
       }
     }

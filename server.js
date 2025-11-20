@@ -33,10 +33,14 @@ const License = mongoose.model("License", LicenseSchema);
 app.post("/validate", async (req, res) => {
   try {
     let body = req.body;
-    try {
-      body = JSON.parse(body);
-    } catch {
-      return res.json({ success: false, message: "Invalid JSON format" });
+
+    // Always treat incoming body as text and parse JSON
+    if (typeof body === "string") {
+      try {
+        body = JSON.parse(body);
+      } catch {
+        return res.json({ success: false, message: "Invalid JSON format" });
+      }
     }
 
     const { license_key, account_number, ea_version } = body;
@@ -44,9 +48,8 @@ app.post("/validate", async (req, res) => {
     if (!license_key || !account_number)
       return res.json({ success: false, message: "Missing details" });
 
-    const lic = await License.findOne({ key: license_key });
-    if (!lic)
-      return res.json({ success: false, message: "Invalid license key" });
+    const lic = await License.findOne({ key: license_key.trim() });
+    if (!lic) return res.json({ success: false, message: "Invalid license key" });
     if (lic.status !== "active")
       return res.json({ success: false, message: "License disabled" });
 

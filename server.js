@@ -36,9 +36,11 @@ app.post("/validate", async (req, res) => {
 
     // Always treat incoming body as text and parse JSON
     if (typeof body === "string") {
+      console.log("🔍 RAW BODY RECEIVED:", body); // <-- add this log
       try {
         body = JSON.parse(body);
-      } catch {
+      } catch (e) {
+        console.log("❌ JSON PARSE ERROR:", e.message); // <-- add this log
         return res.json({ success: false, message: "Invalid JSON format" });
       }
     }
@@ -49,7 +51,8 @@ app.post("/validate", async (req, res) => {
       return res.json({ success: false, message: "Missing details" });
 
     const lic = await License.findOne({ key: license_key.trim() });
-    if (!lic) return res.json({ success: false, message: "Invalid license key" });
+    if (!lic)
+      return res.json({ success: false, message: "Invalid license key" });
     if (lic.status !== "active")
       return res.json({ success: false, message: "License disabled" });
 

@@ -8,7 +8,7 @@ const morgan = require("morgan");
 
 const app = express();
 app.use(cors());
-app.use(bodyParser.json());
+app.use(bodyParser.text({ type: "*/*" }));
 app.use(express.json());
 app.use(morgan("dev"));
 
@@ -32,13 +32,21 @@ const License = mongoose.model("License", LicenseSchema);
 //------------------- Validation Route -------------------
 app.post("/validate", async (req, res) => {
   try {
-    const { license_key, account_number, ea_version } = req.body;
+    let body = req.body;
+    try {
+      body = JSON.parse(body);
+    } catch {
+      return res.json({ success: false, message: "Invalid JSON format" });
+    }
+
+    const { license_key, account_number, ea_version } = body;
 
     if (!license_key || !account_number)
       return res.json({ success: false, message: "Missing details" });
 
     const lic = await License.findOne({ key: license_key });
-    if (!lic) return res.json({ success: false, message: "Invalid license key" });
+    if (!lic)
+      return res.json({ success: false, message: "Invalid license key" });
     if (lic.status !== "active")
       return res.json({ success: false, message: "License disabled" });
 
